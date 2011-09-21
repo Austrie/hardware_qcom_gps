@@ -36,6 +36,8 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := gps.$(BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE)
 
+LOCAL_MODULE_TAGS := optional
+
 ## Libs
 
 LOCAL_SHARED_LIBRARIES := \
@@ -77,7 +79,7 @@ LOCAL_CFLAGS += \
 ## Includes
 LOCAL_C_INCLUDES:= \
 	$(TARGET_OUT_HEADERS)/libcommondefs-rpc/inc \
-	$(TARGET_OUT_HEADERS)/librpc \
+	$(TARGET_OUT_HEADERS)/librpc 
 
 ifeq ($(BOARD_VENDOR_QCOM_GPS_LOC_API_AMSS_VERSION),50001)
 LOCAL_C_INCLUDES += \
@@ -85,11 +87,21 @@ LOCAL_C_INCLUDES += \
 	$(TARGET_OUT_HEADERS)/libloc_api-rpc-qc/rpc_inc \
         $(TARGET_OUT_HEADERS)/loc_api/rpcgen/inc \
         $(TARGET_OUT_HEADERS)/libcommondefs/rpcgen/inc \
-        hardware/msm7k/librpc
+        hardware/msm7k/librpc-qcom
 else
 LOCAL_C_INCLUDES += \
         $(TARGET_OUT_HEADERS)/libloc_api-rpc \
 	$(TARGET_OUT_HEADERS)/libloc_api-rpc/inc
+endif
+
+ifeq ($(BOARD_VENDOR_QCOM_GPS_HAS_BROKEN_XTRA), true)
+LOCAL_CFLAGS += \
+	-DBOARD_VENDOR_QCOM_GPS_HAS_BROKEN_XTRA
+endif
+
+ifeq ($(BOARD_VENDOR_QCOM_GPS_NEEDS_LNA), true)
+LOCAL_CFLAGS += \
+	-DBOARD_VENDOR_QCOM_GPS_NEEDS_LNA
 endif
 
 ifeq ($(FEATURE_GNSS_BIT_API), true)

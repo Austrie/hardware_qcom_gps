@@ -41,6 +41,15 @@
 #include <netdb.h>
 #include <time.h>
 
+// KD - Add for the "open" call
+#ifdef	BOARD_VENDOR_QCOM_GPS_NEEDS_LNA
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#endif
+// End
+
 #include <rpc/rpc.h>
 #include "loc_api_rpc_glue.h"
 #include "loc_apicb_appinit.h"
@@ -58,7 +67,7 @@
 
 #define DEBUG_NI_REQUEST_EMU 0
 
-#define LOC_DATA_DEFAULT FALSE          // Default data connection status (1=ON, 0=OFF)
+#define LOC_DATA_DEFAULT TRUE // Default data connection status (1=ON, 0=OFF)
 #define SUCCESS TRUE
 #define FAILURE FALSE
 
@@ -231,6 +240,7 @@ static int loc_eng_init(GpsCallbacks* callbacks)
    {
       loc_eng_deinit();       /* stop the active client */
 #ifdef FEATURE_GNSS_BIT_API
+      LOC_LOGD("KD: Enable GNSS features\n");
       loc_eng_dmn_conn_loc_api_server_unblock();
       loc_eng_dmn_conn_loc_api_server_join();
 #endif /* FEATURE_GNSS_BIT_API */
@@ -411,7 +421,22 @@ static int loc_eng_start()
    INIT_CHECK("loc_eng_start");
 
    int ret_val;
+   int	sync_handle;
+
    LOC_LOGD("loc_eng_start called");
+
+#ifdef	BOARD_VENDOR_QCOM_GPS_NEEDS_LNA
+// KD - open the LNA on an init if it is not already open.
+//
+   sync_handle = open("/dev/gps_sync", O_RDWR);	/* Get the handle */
+   if (sync_handle >= 0) {
+	ioctl(sync_handle, 0, NULL);	/* Turn on the LNA */
+	close(sync_handle);
+	LOC_LOGD("Enable LNA");
+   } else {
+	LOC_LOGD("Cannot enable LNA - error %d", errno);
+   }
+#endif
 
    ret_val = loc_start_fix(loc_eng_data.client_handle);
 
@@ -447,7 +472,23 @@ static int loc_eng_stop()
    INIT_CHECK("loc_eng_stop");
 
    int ret_val;
+   int	sync_handle;
+
    LOC_LOGD("loc_eng_stop called");
+
+#ifdef	BOARD_VENDOR_QCOM_GPS_NEEDS_LNA
+// KD - Close the LNA channel when the client shuts down
+//
+   sync_handle = open("/dev/gps_sync", O_RDWR);	/* Get the handle */
+   if (sync_handle >= 0) {
+	ioctl(sync_handle, 1, NULL);	/* Turn off the LNA */
+	LOC_LOGD("Disable LNA");
+	close(sync_handle);
+   } else {
+	LOC_LOGD("LNA control channel disable failed %d", errno);
+   }
+#endif
+
    pthread_mutex_lock(&(loc_eng_data.deferred_stop_mutex));
     // work around problem with loc_eng_stop when AGPS requests are pending
     // we defer stopping the engine until the AGPS request is done
@@ -536,14 +577,21 @@ static int  loc_eng_set_position_mode(GpsPositionMode mode, GpsPositionRecurrenc
    switch (mode)
    {
    case GPS_POSITION_MODE_MS_BASED:
+      LOGD("Requested MS_BASED mode\n");
       op_mode = RPC_LOC_OPER_MODE_MSB;
       break;
    case GPS_POSITION_MODE_MS_ASSISTED:
+      LOGD("Requesting MS_ASSISTED mode\n");
       op_mode = RPC_LOC_OPER_MODE_MSA;
       break;
    default:
+      LOGD("Requesting STANDALONE mode\n");
       op_mode = RPC_LOC_OPER_MODE_STANDALONE;
    }
+#ifdef	BOARD_VENDOR_QCOM_GPS_HAS_BROKEN_XTRA
+      LOGD("OVERRIDE to STANDALONE mode - XTRA is broken\n");
+      op_mode = RPC_LOC_OPER_MODE_STANDALONE;
+#endif
 
    fix_criteria_ptr = &ioctl_data.rpc_loc_ioctl_data_u_type_u.fix_criteria;
    fix_criteria_ptr->valid_mask = RPC_LOC_FIX_CRIT_VALID_PREFERRED_OPERATION_MODE |
@@ -618,7 +666,11 @@ static int loc_eng_inject_time(GpsUtcTime time, int64_t timeReference, int uncer
    rpc_loc_ioctl_e_type             ioctl_type = RPC_LOC_IOCTL_INJECT_UTC_TIME;
    boolean                          ret_val;
 
-   LOC_LOGD ("loc_eng_inject_time, uncertainty = %d\n", uncertainty);
+#ifdef	BOARD_VENDOR_QCOM_GPS_HAS_BROKEN_XTRA
+//   LOC_LOGD ("loc_eng_inject_time, uncertainty = %d\n", uncertainty);
+   LOC_LOGD ("KD loc_eng_inject_time DISABLED, uncertainty = %d\n", uncertainty);
+   return RPC_LOC_API_SUCCESS;
+#endif
 
    time_info_ptr = &ioctl_data.rpc_loc_ioctl_data_u_type_u.assistance_data_time;
    time_info_ptr->time_utc = time;
@@ -762,21 +814,27 @@ SIDE EFFECTS
 ===========================================================================*/
 static const void* loc_eng_get_extension(const char* name)
 {
+   LOC_LOGD("KD loc_eng_get_extension: %s\n", name);
+    
    if (strcmp(name, GPS_XTRA_INTERFACE) == 0)
    {
+      LOC_LOGD("KD loc_eng_get_extension XTRA\n");
       return &sLocEngXTRAInterface;
    }
 
    else if (strcmp(name, AGPS_INTERFACE) == 0)
    {
+      LOC_LOGD("KD loc_eng_get_extension AGPS\n");
       return &sLocEngAGpsInterface;
    }
 
    else if (strcmp(name, GPS_NI_INTERFACE) == 0)
    {
+      LOC_LOGD("KD loc_eng_get_extension NI\n");
       return &sLocEngNiInterface;
    }
 
+   LOC_LOGD("KD loc_eng_get_extension NONE\n");
    return NULL;
 }
 
@@ -1997,7 +2055,8 @@ static void loc_eng_report_agps_status(AGpsType type, AGpsStatusValue status, in
    LOC_LOGD("loc_eng_report_agps_status, type = %d, status = %d, ipaddr = %d\n",
          (int) type, (int) status,  ipaddr);
 
-   AGpsStatus agpsStatus = {sizeof(agpsStatus),type, status, ipaddr};
+/*   AGpsStatus agpsStatus = {sizeof(agpsStatus),type, status, ipaddr}; */
+   AGpsStatus agpsStatus = {sizeof(agpsStatus),type, status};
    switch (status)
    {
       case GPS_REQUEST_AGPS_DATA_CONN:

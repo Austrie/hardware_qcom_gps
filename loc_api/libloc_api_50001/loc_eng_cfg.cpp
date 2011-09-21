@@ -166,7 +166,7 @@ void loc_read_gps_conf(void)
 
    if((gps_conf_fp = fopen(GPS_CONF_FILE, "r")) != NULL)
    {
-      LOC_LOGD("loc_read_gps_conf: using %s", GPS_CONF_FILE);
+      LOC_LOGD("loc_read_gps_conf 50001: using %s", GPS_CONF_FILE);
    }
    else
    {

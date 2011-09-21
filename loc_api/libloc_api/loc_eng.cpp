@@ -502,7 +502,7 @@ static int loc_eng_inject_time (GpsUtcTime time, int64_t timeReference, int unce
     rpc_loc_assist_data_time_s_type *time_info_ptr;
     boolean                          ret_val;
 
-    LOGD ("loc_eng_inject_time, uncertainty = %d\n", uncertainty);
+    LOGD ("loc_eng_inject_time, time = %lld, uncertainty = %d\n", time, uncertainty);
 
     ioctl_data.disc = RPC_LOC_IOCTL_INJECT_UTC_TIME;
 

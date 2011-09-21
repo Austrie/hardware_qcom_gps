@@ -87,6 +87,7 @@ static int qct_loc_eng_xtra_init (GpsXtraCallbacks* callbacks)
 
    xtra_module_data_ptr = &loc_eng_data.xtra_module_data;
    xtra_module_data_ptr->download_request_cb = callbacks->download_request_cb;
+   LOC_LOGD("qct_loc_eng_xtra_init called");
 
    return 0;
 }
@@ -119,6 +120,11 @@ static int qct_loc_eng_inject_xtra_data(char* data, int length)
    rpc_loc_ioctl_data_u_type            ioctl_data;
    rpc_loc_ioctl_e_type                 ioctl_type = RPC_LOC_IOCTL_INJECT_PREDICTED_ORBITS_DATA;
    rpc_loc_predicted_orbits_data_s_type *predicted_orbits_data_ptr;
+
+#ifdef	BOARD_VENDOR_QCOM_GPS_HAS_BROKEN_XTRA
+   LOC_LOGD("qct_loc_eng_inject_xtra_data - DISABLED");
+	return RPC_LOC_API_SUCCESS;
+#endif
 
    LOC_LOGD("qct_loc_eng_inject_xtra_data, xtra size = %d, data ptr = 0x%x\n", length, (int) data);
 

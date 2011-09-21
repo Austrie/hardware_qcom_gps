@@ -48,7 +48,7 @@ LOCAL_SRC_FILES += \
     src/loc_api_rpcgen_clnt.c \
     src/loc_api_rpcgen_xdr.c
 
-LOCAL_C_INCLUDES += hardware/msm7k/librpc
+LOCAL_C_INCLUDES += hardware/msm7k/librpc-qcom
 LOCAL_C_INCLUDES += $(LOC_RPCGEN_APIS_PATH)/../../SHARED_LIBRARIES/libcommondefs_intermediates/inc
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/inc
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/libcommondefs/rpcgen/inc
@@ -61,5 +61,8 @@ LOCAL_COPY_HEADERS += inc/loc_apicb_appinit.h
 
 LOCAL_LDLIBS += -lpthread
 LOCAL_PRELINK_MODULE := false
-LOCAL_MODULE_TAGS:=user
+# LOCAL_MODULE_TAGS:=user
+
+LOCAL_MODULE_TAGS := optional
+
 include $(BUILD_STATIC_LIBRARY)

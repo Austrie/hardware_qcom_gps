@@ -31,7 +31,7 @@
 #define LOC_ENG_H
 
 // Uncomment to keep all LOG messages (LOGD, LOGI, LOGV, etc.)
-// #define LOG_NDEBUG 0
+#define LOG_NDEBUG 0
 
 // Define boolean type to be used by libgps on loc api module
 typedef unsigned char boolean;

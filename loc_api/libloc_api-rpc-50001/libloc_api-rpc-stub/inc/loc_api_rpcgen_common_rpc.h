@@ -753,6 +753,9 @@ struct rpc_loc_predicted_orbits_auto_download_config_s_type {
 };
 typedef struct rpc_loc_predicted_orbits_auto_download_config_s_type rpc_loc_predicted_orbits_auto_download_config_s_type;
 
+/*
+ * KD - Change apparent time injection fuckup
+ */
 struct rpc_loc_assist_data_time_s_type {
     rpc_uint64 time_utc;
     rpc_uint32 uncertainty;

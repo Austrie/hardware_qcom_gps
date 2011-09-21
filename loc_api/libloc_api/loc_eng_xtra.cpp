@@ -85,6 +85,7 @@ static int qct_loc_eng_xtra_init (GpsXtraCallbacks* callbacks)
 
     xtra_module_data_ptr = &(loc_eng_data.xtra_module_data);
     xtra_module_data_ptr->download_request_cb = callbacks->download_request_cb;
+    LOGV ("qct_loc_eng_xtra_init called");
 
     return 0;
 }

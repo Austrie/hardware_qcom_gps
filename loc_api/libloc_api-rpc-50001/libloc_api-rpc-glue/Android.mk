@@ -65,7 +65,7 @@ LOCAL_C_INCLUDES:= \
 	$(TARGET_OUT_HEADERS)/libcommondefs/rpcgen/inc \
 	$(TARGET_OUT_HEADERS)/librpc \
 	$(TARGET_OUT_HEADERS)/libloc-rpc/rpc_inc \
-	hardware/msm7k/librpc \
+	hardware/msm7k/librpc-qcom \
 
 LOCAL_COPY_HEADERS_TO:= libloc_api-rpc-qc/$(RPC_INC)
 LOCAL_COPY_HEADERS:= \
@@ -75,5 +75,7 @@ LOCAL_COPY_HEADERS:= \
 	$(RPC_INC)/loc_apicb_appinit.h
 
 LOCAL_MODULE:= libloc_api-rpc-qc
+
+LOCAL_MODULE_TAGS := optional
 
 include $(BUILD_SHARED_LIBRARY)

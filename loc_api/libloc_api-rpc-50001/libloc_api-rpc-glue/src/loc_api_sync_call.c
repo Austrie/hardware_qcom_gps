@@ -486,8 +486,9 @@ int loc_api_sync_ioctl
 
    if (select_id >= 0)
    {
+      LOGE("handle %d", handle);
       rc =  loc_ioctl(handle, ioctl_type, ioctl_data_ptr);
-      LOGV("loc_api_sync_ioctl: select_id = %d, loc_ioctl returned %d\n", select_id, rc);
+      LOGE("loc_api_sync_ioctl: select_id = %d, loc_ioctl returned %d\n", select_id, rc);
 
       if (rc != RPC_LOC_API_SUCCESS)
       {
@@ -506,7 +507,7 @@ int loc_api_sync_ioctl
             if (callback_data.status != RPC_LOC_API_SUCCESS)
             {
                rc = callback_data.status;
-               LOGE("loc_api_sync_ioctl: IOCTL result failed, result: %d (select id %d)\n", rc, select_id);
+               LOGE("loc_api_sync_ioctl: XX IOCTL result failed, result: %d (select id %d)\n", rc, select_id);
             }
          } /* wait callback */
       } /* loc_ioctl */
